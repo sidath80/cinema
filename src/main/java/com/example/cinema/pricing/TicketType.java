@@ -1,4 +1,4 @@
-package com.example.cinema.dto;
+package com.example.cinema.pricing;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 

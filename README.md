@@ -14,8 +14,13 @@ A Spring Boot application for managing cinema ticket transactions, including cus
 
 - RESTful API for ticket transactions
 - Customer and transaction validation using Jakarta Bean Validation
+- Spring Factory pattern for creating different types of ticket calculators
+- Strategy pattern for ticket price calculation
 - Error handling with detailed validation messages
-- Sample test data and integration tests
+- Sample test data and integration tests for both success and failure scenarios
+- API documentation using Swagger/OpenAPI
+- Containerization with Docker
+- Configuration management using application.yml
 
 ## Requirements
 

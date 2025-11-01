@@ -36,7 +36,7 @@ class TicketControllerIT {
         String requestJson = Files.readString(Path.of("src/test/resources/" + testCase.requestFile));
         String expectedResponseJson = Files.readString(Path.of("src/test/resources/" + testCase.responseFile));
 
-        mockMvc.perform(post("/api/tickets/calculate")
+        mockMvc.perform(post("/api/v1/tickets/calculate")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isOk())
@@ -57,7 +57,7 @@ class TicketControllerIT {
         String requestJson = Files.readString(Path.of("src/test/resources/" + testCase.requestFile));
         String expectedResponseJson = Files.readString(Path.of("src/test/resources/" + testCase.responseFile));
 
-        mockMvc.perform(post("/api/tickets/calculate")
+        mockMvc.perform(post("/api/v1/tickets/calculate")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().is4xxClientError())

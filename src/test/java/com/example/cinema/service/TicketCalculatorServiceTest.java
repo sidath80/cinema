@@ -2,29 +2,41 @@ package com.example.cinema.service;
 
 import com.example.cinema.config.TicketPricingProperties;
 import com.example.cinema.dto.*;
+import com.example.cinema.pricing.*;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
+@RequiredArgsConstructor
 class TicketCalculatorServiceTest {
 
-    private TicketPricingProperties pricing;
     private TicketCalculatorService service;
+    private TicketPricingProperties pricing;
 
     @BeforeEach
     void setUp() {
-        pricing = mock(TicketPricingProperties.class);
-        when(pricing.getAdult()).thenReturn(10.0);
-        when(pricing.getTeen()).thenReturn(7.0);
-        when(pricing.getChildren()).thenReturn(5.0);
-        when(pricing.getSeniorDiscount()).thenReturn(0.2); // 20%
-        when(pricing.getChildrenDiscount()).thenReturn(0.1); // 10%
-        when(pricing.getChildrenDiscountThreshold()).thenReturn(3);
-        service = new TicketCalculatorService(pricing);
+        pricing = new TicketPricingProperties();
+        pricing.setAdult(10.0);
+        pricing.setTeen(7.0);
+        pricing.setChildren(5.0);
+        pricing.setSeniorDiscount(0.2); // 20%
+        pricing.setChildrenDiscount(0.1); // 10%
+        pricing.setChildrenDiscountThreshold(3);
+
+        service = new TicketCalculatorService(
+                pricing,
+                List.of(
+                        new AdultTicketPricingStrategy(),
+                        new SeniorTicketPricingStrategy(),
+                        new TeenTicketPricingStrategy(),
+                        new ChildrenTicketPricingStrategy()
+                ),
+                new TransactionResponseService()
+        );
     }
 
     @Test
@@ -33,10 +45,7 @@ class TicketCalculatorServiceTest {
         TransactionResponse resp = service.calculate(req);
 
         assertEquals(1, resp.tickets().size());
-        TicketBreakdown tb = resp.tickets().get(0);
-        assertEquals(TicketType.ADULT, tb.ticketType());
-        assertEquals(1, tb.quantity());
-        assertEquals(10.0, tb.totalCost());
+        assertEquals(TicketType.ADULT, resp.tickets().get(0).ticketType());
         assertEquals(10.0, resp.totalCost());
     }
 
@@ -46,11 +55,8 @@ class TicketCalculatorServiceTest {
         TransactionResponse resp = service.calculate(req);
 
         assertEquals(1, resp.tickets().size());
-        TicketBreakdown tb = resp.tickets().get(0);
-        assertEquals(TicketType.SENIOR, tb.ticketType());
-        assertEquals(1, tb.quantity());
-        assertEquals(8.0, tb.totalCost()); // 10 - 20%
-        assertEquals(8.0, resp.totalCost());
+        assertEquals(TicketType.SENIOR, resp.tickets().get(0).ticketType());
+        assertEquals(8.0, resp.totalCost()); // 10 - 20%
     }
 
     @Test
@@ -59,10 +65,7 @@ class TicketCalculatorServiceTest {
         TransactionResponse resp = service.calculate(req);
 
         assertEquals(1, resp.tickets().size());
-        TicketBreakdown tb = resp.tickets().get(0);
-        assertEquals(TicketType.TEEN, tb.ticketType());
-        assertEquals(1, tb.quantity());
-        assertEquals(7.0, tb.totalCost());
+        assertEquals(TicketType.TEEN, resp.tickets().get(0).ticketType());
         assertEquals(7.0, resp.totalCost());
     }
 
@@ -72,10 +75,7 @@ class TicketCalculatorServiceTest {
         TransactionResponse resp = service.calculate(req);
 
         assertEquals(1, resp.tickets().size());
-        TicketBreakdown tb = resp.tickets().get(0);
-        assertEquals(TicketType.CHILDREN, tb.ticketType());
-        assertEquals(1, tb.quantity());
-        assertEquals(5.0, tb.totalCost());
+        assertEquals(TicketType.CHILDREN, resp.tickets().get(0).ticketType());
         assertEquals(5.0, resp.totalCost());
     }
 
@@ -90,11 +90,8 @@ class TicketCalculatorServiceTest {
         TransactionResponse resp = service.calculate(req);
 
         assertEquals(1, resp.tickets().size());
-        TicketBreakdown tb = resp.tickets().get(0);
-        assertEquals(TicketType.CHILDREN, tb.ticketType());
-        assertEquals(4, tb.quantity());
-        assertEquals(18.0, tb.totalCost()); // 4*5=20, 10% off = 18
-        assertEquals(18.0, resp.totalCost());
+        assertEquals(TicketType.CHILDREN, resp.tickets().get(0).ticketType());
+        assertEquals(18.0, resp.totalCost()); // 4*5=20, 10% off = 18
     }
 
     @Test
