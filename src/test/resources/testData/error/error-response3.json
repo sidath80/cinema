@@ -1,0 +1,14 @@
+{
+  "details":[
+    {
+      "message":"must not be null",
+      "field":"customers"
+    },
+    {
+      "message":"must not be empty",
+      "field":"customers"
+    }
+  ],
+  "error":"Validation Failed",
+  "status":400
+}

@@ -1,0 +1,17 @@
+{
+  "transactionId": 0,
+  "customers": [
+    {
+      "name": "",
+      "age": -1
+    },
+    {
+      "name": "Jane Doe",
+      "age": 5
+    },
+    {
+      "name": "Bob Doe",
+      "age": 6
+    }
+  ]
+}
