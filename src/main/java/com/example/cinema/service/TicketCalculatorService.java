@@ -1,6 +1,5 @@
 package com.example.cinema.service;
 
-import com.example.cinema.config.TicketPricingProperties;
 import com.example.cinema.dto.Customer;
 import com.example.cinema.dto.TransactionRequest;
 import com.example.cinema.dto.TransactionResponse;
@@ -16,9 +15,8 @@ import java.util.Map;
 @Service("defaultTicketCalculator")
 @RequiredArgsConstructor
 public class TicketCalculatorService implements TicketCalculator {
-    private final TicketPricingProperties pricing;
-    private final List<TicketPricingStrategy> strategies;
-    private final TransactionResponseService responseService;
+    private final TransactionResponseService transactionResponseService;
+    private final List<TicketPricingStrategy> ticketPricingStrategyList;
 
     @Override
     public TransactionResponse calculate(TransactionRequest request) {
@@ -29,15 +27,14 @@ public class TicketCalculatorService implements TicketCalculator {
         }
 
         Map<TicketType, TicketPricingStrategy> strategyMap = new EnumMap<>(TicketType.class);
-        for (TicketPricingStrategy strategy : strategies) {
+        for (TicketPricingStrategy strategy : ticketPricingStrategyList) {
             strategyMap.put(strategy.getSupportedType(), strategy);
         }
 
-        return responseService.create(
+        return transactionResponseService.create(
                 request.transactionId(),
                 typeCount,
-                strategyMap,
-                pricing
+                strategyMap
         );
     }
 }

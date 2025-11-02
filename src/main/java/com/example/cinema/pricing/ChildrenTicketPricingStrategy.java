@@ -4,9 +4,13 @@ import com.example.cinema.config.TicketPricingProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ChildrenTicketPricingStrategy implements TicketPricingStrategy {
+public class ChildrenTicketPricingStrategy extends AbstractTicketPricingStrategy {
+    protected ChildrenTicketPricingStrategy(TicketPricingProperties pricing) {
+        super(pricing);
+    }
+
     @Override
-    public double calculateCost(int qty, TicketPricingProperties pricing) {
+    public double calculateCost(int qty) {
         double price = pricing.getChildren() * qty;
         if (qty >= pricing.getChildrenDiscountThreshold()) {
             price *= (1 - pricing.getChildrenDiscount());

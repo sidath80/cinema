@@ -1,6 +1,5 @@
 package com.example.cinema.service;
 
-import com.example.cinema.config.TicketPricingProperties;
 import com.example.cinema.dto.TicketBreakdown;
 import com.example.cinema.dto.TransactionResponse;
 import com.example.cinema.pricing.TicketPricingStrategy;
@@ -17,16 +16,14 @@ public class TransactionResponseService {
     public TransactionResponse create(
             int transactionId,
             Map<TicketType, Integer> typeCount,
-            Map<TicketType, TicketPricingStrategy> strategyMap,
-            TicketPricingProperties pricing
-    ) {
+            Map<TicketType, TicketPricingStrategy> strategyMap) {
         List<TicketBreakdown> breakdowns = new ArrayList<>();
         double total = 0.0;
 
         for (var entry : typeCount.entrySet()) {
             TicketPricingStrategy strategy = strategyMap.get(entry.getKey());
             int qty = entry.getValue();
-            double cost = strategy.calculateCost(qty, pricing);
+            double cost = strategy.calculateCost(qty);
             breakdowns.add(new TicketBreakdown(entry.getKey(), qty, cost));
             total += cost;
         }

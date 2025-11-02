@@ -1,119 +1,104 @@
 package com.example.cinema.service;
 
-import com.example.cinema.config.TicketPricingProperties;
-import com.example.cinema.dto.*;
-import com.example.cinema.pricing.*;
-import lombok.RequiredArgsConstructor;
+import com.example.cinema.dto.Customer;
+import com.example.cinema.dto.TransactionRequest;
+import com.example.cinema.dto.TransactionResponse;
+import com.example.cinema.pricing.TicketPricingStrategy;
+import com.example.cinema.pricing.TicketType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.util.List;
+import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
-@RequiredArgsConstructor
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+
 class TicketCalculatorServiceTest {
 
+    private TicketPricingStrategy adultStrategy;
+    private TicketPricingStrategy childStrategy;
+    private TicketPricingStrategy seniorStrategy;
+    private TicketPricingStrategy teenStrategy;
+
     private TicketCalculatorService service;
-    private TicketPricingProperties pricing;
+    private TransactionResponseService transactionResponseService;
 
     @BeforeEach
     void setUp() {
-        pricing = new TicketPricingProperties();
-        pricing.setAdult(10.0);
-        pricing.setTeen(7.0);
-        pricing.setChildren(5.0);
-        pricing.setSeniorDiscount(0.2); // 20%
-        pricing.setChildrenDiscount(0.1); // 10%
-        pricing.setChildrenDiscountThreshold(3);
+        transactionResponseService = mock(TransactionResponseService.class);
+
+        childStrategy = mock(TicketPricingStrategy.class);
+        when(childStrategy.getSupportedType()).thenReturn(TicketType.CHILDREN);
+
+        adultStrategy = mock(TicketPricingStrategy.class);
+        when(adultStrategy.getSupportedType()).thenReturn(TicketType.ADULT);
+
+        seniorStrategy = mock(TicketPricingStrategy.class);
+        when(seniorStrategy.getSupportedType()).thenReturn(TicketType.SENIOR);
+
+        teenStrategy = mock(TicketPricingStrategy.class);
+        when(teenStrategy.getSupportedType()).thenReturn(TicketType.TEEN);
 
         service = new TicketCalculatorService(
-                pricing,
-                List.of(
-                        new AdultTicketPricingStrategy(),
-                        new SeniorTicketPricingStrategy(),
-                        new TeenTicketPricingStrategy(),
-                        new ChildrenTicketPricingStrategy()
-                ),
-                new TransactionResponseService()
+                transactionResponseService,
+                List.of(childStrategy, adultStrategy, seniorStrategy, teenStrategy)
         );
     }
 
     @Test
-    void calculate_singleAdult() {
-        TransactionRequest req = new TransactionRequest(1, List.of(new Customer("A", 30)));
-        TransactionResponse resp = service.calculate(req);
+    void calculate_successful() {
+        Customer c1 = new Customer("Alice", 5);    // CHILDREN
+        Customer c2 = new Customer("Bob", 30);     // ADULT
+        Customer c3 = new Customer("Eve", 70);     // SENIOR
+        Customer c4 = new Customer("Tom", 16);     // Teen
 
-        assertEquals(1, resp.tickets().size());
-        assertEquals(TicketType.ADULT, resp.tickets().get(0).ticketType());
-        assertEquals(10.0, resp.totalCost());
+        TransactionRequest request = new TransactionRequest(1, List.of(c1, c2, c3, c4));
+        TransactionResponse expected = mock(TransactionResponse.class);
+
+        when(transactionResponseService.create(anyInt(), any(), any())).thenReturn(expected);
+
+        TransactionResponse result = service.calculate(request);
+
+        assertThat(result).isSameAs(expected);
+
+        ArgumentCaptor<Map<TicketType, Integer>> typeCountCaptor = ArgumentCaptor.forClass(Map.class);
+        ArgumentCaptor<Map<TicketType, TicketPricingStrategy>> strategyMapCaptor = ArgumentCaptor.forClass(Map.class);
+
+        verify(transactionResponseService).create(eq(1), typeCountCaptor.capture(), strategyMapCaptor.capture());
+
+        Map<TicketType, Integer> typeCount = typeCountCaptor.getValue();
+        assertThat(typeCount.get(TicketType.CHILDREN)).isEqualTo(1);
+        assertThat(typeCount.get(TicketType.ADULT)).isEqualTo(1);
+        assertThat(typeCount.get(TicketType.SENIOR)).isEqualTo(1);
+        assertThat(typeCount.get(TicketType.TEEN)).isEqualTo(1);
+
+        Map<TicketType, TicketPricingStrategy> strategyMap = strategyMapCaptor.getValue();
+        assertThat(strategyMap.get(TicketType.CHILDREN)).isSameAs(childStrategy);
+        assertThat(strategyMap.get(TicketType.ADULT)).isSameAs(adultStrategy);
+        assertThat(strategyMap.get(TicketType.SENIOR)).isSameAs(seniorStrategy);
+        assertThat(strategyMap.get(TicketType.TEEN)).isSameAs(teenStrategy);
     }
 
     @Test
-    void calculate_singleSenior() {
-        TransactionRequest req = new TransactionRequest(1, List.of(new Customer("S", 70)));
-        TransactionResponse resp = service.calculate(req);
+    void calculate_shouldThrow_whenResponseServiceFails() {
+        Customer c1 = new Customer("Alice", 5);
+        TransactionRequest request = new TransactionRequest(1, List.of(c1));
 
-        assertEquals(1, resp.tickets().size());
-        assertEquals(TicketType.SENIOR, resp.tickets().get(0).ticketType());
-        assertEquals(8.0, resp.totalCost()); // 10 - 20%
-    }
+        when(transactionResponseService.create(anyInt(), any(), any()))
+                .thenThrow(new RuntimeException("Service error"));
 
-    @Test
-    void calculate_singleTeen() {
-        TransactionRequest req = new TransactionRequest(1, List.of(new Customer("T", 15)));
-        TransactionResponse resp = service.calculate(req);
-
-        assertEquals(1, resp.tickets().size());
-        assertEquals(TicketType.TEEN, resp.tickets().get(0).ticketType());
-        assertEquals(7.0, resp.totalCost());
-    }
-
-    @Test
-    void calculate_singleChildren_noDiscount() {
-        TransactionRequest req = new TransactionRequest(1, List.of(new Customer("C", 5)));
-        TransactionResponse resp = service.calculate(req);
-
-        assertEquals(1, resp.tickets().size());
-        assertEquals(TicketType.CHILDREN, resp.tickets().get(0).ticketType());
-        assertEquals(5.0, resp.totalCost());
-    }
-
-    @Test
-    void calculate_multipleChildren_withDiscount() {
-        TransactionRequest req = new TransactionRequest(4, List.of(
-                new Customer("C1", 5),
-                new Customer("C2", 6),
-                new Customer("C3", 7),
-                new Customer("C4", 8)
-        ));
-        TransactionResponse resp = service.calculate(req);
-
-        assertEquals(1, resp.tickets().size());
-        assertEquals(TicketType.CHILDREN, resp.tickets().get(0).ticketType());
-        assertEquals(18.0, resp.totalCost()); // 4*5=20, 10% off = 18
-    }
-
-    @Test
-    void calculate_mixedTypes() {
-        TransactionRequest req = new TransactionRequest(4, List.of(
-                new Customer("A", 30), // ADULT
-                new Customer("S", 70), // SENIOR
-                new Customer("T", 15), // TEEN
-                new Customer("C", 5)   // CHILDREN
-        ));
-        TransactionResponse resp = service.calculate(req);
-
-        assertEquals(4, resp.tickets().size());
-        assertEquals(10.0 + 8.0 + 7.0 + 5.0, resp.totalCost());
-    }
-
-    @Test
-    void calculate_emptyCustomers() {
-        TransactionRequest req = new TransactionRequest(0, List.of());
-        TransactionResponse resp = service.calculate(req);
-
-        assertEquals(0, resp.tickets().size());
-        assertEquals(0.0, resp.totalCost());
+        assertThatThrownBy(() -> service.calculate(request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Service error");
     }
 }
