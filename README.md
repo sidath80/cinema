@@ -9,6 +9,9 @@ A Spring Boot application for managing cinema ticket transactions, including cus
 - [Configuration](#configuration)
 - [Error Handling](#error-handling)
 - [Run using Docker](#run-using-docker)
+- [Actuator Endpoints](#actuator-endpoints)
+- [Logging](#logging)
+
 
 ## Features
 
@@ -21,7 +24,8 @@ A Spring Boot application for managing cinema ticket transactions, including cus
 - API documentation using Swagger/OpenAPI
 - Containerization with Docker
 - Configuration management using application.yml
--  Logging with SLF4J , Logback and MDC
+- Logging with SLF4J, Logback and MDC
+- Actuator health endpoints for monitoring application health
 
 ## Requirements
 
@@ -103,3 +107,13 @@ To build and run the application using Docker, follow these steps:
    ```bash
     docker run -p 8080:8080 cinema-ticket-service
     ```
+## Actuator Endpoints
+The application includes Spring Boot Actuator for monitoring. You can access the health endpoint at:
+```
+http://localhost:8080/actuator/health
+```
+## Logging
+The application uses SLF4J with Logback for logging. Logs include contextual information using MDC (Mapped Diagnostic Context) for better traceability.
+Logs can be found in the `logs` directory created in the project root.
+Logback configuration can be customized in the `logback-spring.xml` file.
+

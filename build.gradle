@@ -34,7 +34,7 @@ processResources {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     //open api
     implementation 'io.springfox:springfox-boot-starter:3.0.0'
     swaggerCodegen 'org.openapitools:openapi-generator-cli:7.3.0'
