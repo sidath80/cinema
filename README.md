@@ -21,6 +21,7 @@ A Spring Boot application for managing cinema ticket transactions, including cus
 - API documentation using Swagger/OpenAPI
 - Containerization with Docker
 - Configuration management using application.yml
+-  Logging with SLF4J , Logback and MDC
 
 ## Requirements
 

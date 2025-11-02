@@ -2,8 +2,9 @@ package com.example.cinema.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record Customer(
         @NotBlank String name,
-        @Min(0) int age
+        @NotNull @Min(0) int age
 ) {}
