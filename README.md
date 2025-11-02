@@ -49,8 +49,29 @@ You can access the Swagger UI for API documentation at:
 http://localhost:8080/swagger-ui/index.html
 ``` 
 
+
 ### Sample Data
 The application includes sample data for customers and transactions, which can be found in the `testData` package.
+
+```
+{
+  "transactionId": 1,
+  "customers": [
+    {
+      "name": "John Smith",
+      "age": 70
+    },
+    {
+      "name": "Jane Doe",
+      "age": 5
+    },
+    {
+      "name": "Bob Doe",
+      "age": 6
+    }
+  ]
+}
+``` 
 
 ### Testing
 The application includes unit and integration tests. To run the tests, use:
